@@ -1,6 +1,8 @@
 package doc
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 // Pos is an element of a position identifier. A position identifier identifies an
 // atom within a Doc. The behaviour of an empty position identifier (length == 0) is
@@ -36,7 +38,7 @@ func ComparePos(lp []Pos, rp []Pos) int8 {
 	return 0
 }
 
-// random number between x and y, where y > x.
+// random number between x and y, where y is greater than x.
 func random(x, y uint16) uint16 {
 	return uint16(rand.Intn(int(y-x-1))) + 1 + x
 }

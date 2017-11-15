@@ -36,12 +36,28 @@ func New(content []string, site uint8) *Doc {
 
 // Get the atom at the position. Secondary return value indicates whether the value exists.
 func (d *Doc) Get(p []Pos) (string, bool) {
-	return "", false
+	pr := d.pairs
+	for {
+		if len(pr) == 0 {
+			// No position found
+			return "", false
+		}
+		spt := len(pr) / 2
+		pair := pr[spt]
+		if cmp := ComparePos(pair.pos, p); cmp == 0 {
+			return pair.atom, true
+		} else if cmp == -1 {
+			pr = pr[spt+1:]
+		} else if cmp == 1 {
+			pr = pr[0:spt]
+		}
+	}
 }
 
 // Insert a new pair at the position, returning success or failure (already existing
 // position).
 func (d *Doc) Insert(p []Pos, atom string) bool {
+	d.pairs = append(d.pairs, pair{p, atom})
 	return false
 }
 
