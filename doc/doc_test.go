@@ -7,6 +7,7 @@ import (
 	"github.com/ravernkoh/logoot/doc"
 )
 
+// Can only test start and end positions because the rest are randomly generated.
 func TestDocGetPos(t *testing.T) {
 	tests := []struct {
 		pos    []doc.Pos

@@ -1,8 +1,8 @@
 package doc
 
-// Doc represents a Logoot document. Actions like Insert and Delete can be performed on Doc.
-// If at any time an invalid position is given, a panic will occur, so raw positions should
-// only be used for debugging purposes.
+// Doc represents a Logoot document. Actions like Insert and Delete can be performed
+// on Doc. If at any time an invalid position is given, a panic will occur, so raw
+// positions should only be used for debugging purposes.
 type Doc struct {
 	site  uint8
 	pairs []pair
@@ -34,19 +34,22 @@ func New(content []string, site uint8) *Doc {
 
 /* Basic methods */
 
-// Get the atom at the position. Secondary return value indicates whether the value exists.
-func (d *Doc) Get(p []Pos) (string, bool) {
+// Index of a position in the Doc. Secondary value indicates whether the value exists.
+// If the value doesn't exist, the index returned is the index that the position would
+// have been in, should it have existed.
+func (d *Doc) Index(p []Pos) (int, bool) {
+	off := 0
 	pr := d.pairs
 	for {
 		if len(pr) == 0 {
-			// No position found
-			return "", false
+			return off, false
 		}
 		spt := len(pr) / 2
 		pair := pr[spt]
 		if cmp := ComparePos(pair.pos, p); cmp == 0 {
-			return pair.atom, true
+			return spt + off, true
 		} else if cmp == -1 {
+			off += spt + 1
 			pr = pr[spt+1:]
 		} else if cmp == 1 {
 			pr = pr[0:spt]
@@ -54,11 +57,24 @@ func (d *Doc) Get(p []Pos) (string, bool) {
 	}
 }
 
+// Atom at the position. Secondary return value indicates whether the value exists.
+func (d *Doc) Get(p []Pos) (string, bool) {
+	i, exists := d.Index(p)
+	if !exists {
+		return "", false
+	}
+	return d.pairs[i].atom, true
+}
+
 // Insert a new pair at the position, returning success or failure (already existing
 // position).
 func (d *Doc) Insert(p []Pos, atom string) bool {
-	d.pairs = append(d.pairs, pair{p, atom})
-	return false
+	i, exists := d.Index(p)
+	if exists {
+		return false
+	}
+	d.pairs = append(d.pairs[0:i], append([]pair{{p, atom}}, d.pairs[i:]...)...)
+	return true
 }
 
 // Delete the pair at the position, returning success or failure (non-existent position).
@@ -85,23 +101,23 @@ func (d *Doc) Right(p []Pos) ([]Pos, bool) {
 	return nil, false
 }
 
-// Each element, along with their positions will be passed to the provided closure in order.
-// The closure should return true to continue or false to break.
+// Each element, along with their positions will be passed to the provided closure
+// in order. The closure should return true to continue or false to break.
 func (d *Doc) Each(f func([]Pos, string) bool) {
 }
 
 /* Convenience methods */
 
-// InsertLeft inserts the atom to the left of the given position, returning whether it is
-// successful (when the given position doesn't exist, InsertLeft won't do anything and
-// return false).
+// InsertLeft inserts the atom to the left of the given position, returning whether it
+// is successful (when the given position doesn't exist, InsertLeft won't do anything
+// and return false).
 func (d *Doc) InsertLeft(p []Pos, atom string) bool {
 	return false
 }
 
-// InsertRight inserts the atom to the right of the given position, returning whether it is
-// successful (when the given position doesn't exist, InsertRight won't do anything and
-// return false).
+// InsertRight inserts the atom to the right of the given position, returning whether it
+// is successful (when the given position doesn't exist, InsertRight won't do anything
+// and return false).
 func (d *Doc) InsertRight(p []Pos, atom string) bool {
 	return false
 }
