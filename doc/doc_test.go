@@ -98,14 +98,14 @@ func TestDocLeft(t *testing.T) {
 	d := doc.New(tests, 1)
 	p := doc.End
 	for i := 0; i < len(tests); i++ {
-		newp, exists := d.Left(p)
+		np, exists := d.Left(p)
 		if !exists && i != len(tests)-1 {
 			t.Errorf("Test %d: Expected position to exist.", i+1)
 		}
-		if doc.ComparePos(newp, p) != -1 {
+		if doc.ComparePos(np, p) != -1 {
 			t.Errorf("Test %d: Expected new position to be less than old position.", i+1)
 		}
-		p = newp
+		p = np
 	}
 }
 
@@ -120,13 +120,63 @@ func TestDocRight(t *testing.T) {
 	d := doc.New(tests, 1)
 	p := doc.Start
 	for i := 0; i < len(tests); i++ {
-		newp, exists := d.Right(p)
+		np, exists := d.Right(p)
 		if !exists && i != len(tests)-1 {
 			t.Errorf("Test %d: Expected position to exist.", i+1)
 		}
-		if doc.ComparePos(newp, p) != 1 {
+		if doc.ComparePos(np, p) != 1 {
 			t.Errorf("Test %d: Expected new position to be greater than old position.", i+1)
 		}
-		p = newp
+		p = np
+	}
+}
+
+func TestDocInsertLeft(t *testing.T) {
+	tests := []string{
+		"hel",
+		"lo ",
+		"wor",
+		"ld.",
+	}
+
+	d := doc.New([]string{}, 1)
+	p := doc.End
+	for i := len(tests) - 1; i >= 0; i-- {
+		np, success := d.InsertLeft(p, tests[i])
+		if !success {
+			t.Errorf("Test %d: Expected successful insert.", i+1)
+		}
+		p = np
+	}
+
+	c := d.Content()
+	s := strings.Join(tests, "")
+	if c != s {
+		t.Errorf("Expected content to be %s, but got %s.", s, c)
+	}
+}
+
+func TestDocInsertRight(t *testing.T) {
+	tests := []string{
+		"hel",
+		"lo ",
+		"wor",
+		"ld.",
+	}
+
+	d := doc.New([]string{}, 1)
+	p := doc.Start
+	for i := 0; i < len(tests); i++ {
+		np, success := d.InsertRight(p, tests[i])
+		if !success {
+			t.Errorf("Test %d: Expected successful insert.", i+1)
+		}
+		p = np
+	}
+
+	c := d.Content()
+	s := strings.Join(tests, "")
+	if c != s {
+		t.Errorf("Expected content to be %s, but got %s.", s, c)
 	}
 }

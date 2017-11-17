@@ -81,7 +81,12 @@ func (d *Doc) Insert(p []Pos, atom string) bool {
 
 // Delete the pair at the position, returning success or failure (non-existent position).
 func (d *Doc) Delete(p []Pos) bool {
-	return false
+	i, exists := d.Index(p)
+	if !exists || i == 0 || i == len(d.pairs)-1 {
+		return false
+	}
+	d.pairs = append(d.pairs[0:i], d.pairs[i+1:]...)
+	return true
 }
 
 // Left returns the position to the left of the given position, and a flag indicating
@@ -117,50 +122,56 @@ func (d *Doc) GeneratePos(lp []Pos, rp []Pos) ([]Pos, bool) {
 
 /* Convenience methods */
 
-// InsertLeft inserts the atom to the left of the given position, returning whether it
-// is successful (when the given position doesn't exist, InsertLeft won't do anything
-// and return false).
-func (d *Doc) InsertLeft(p []Pos, atom string) bool {
+// InsertLeft inserts the atom to the left of the given position, returning the inserted
+// position and whether it is successful (when the given position doesn't exist,
+// InsertLeft won't do anything and return false).
+func (d *Doc) InsertLeft(p []Pos, atom string) ([]Pos, bool) {
 	lp, success := d.Left(p)
 	if !success {
-		return false
+		return nil, false
 	}
 	np, success := d.GeneratePos(lp, p)
 	if !success {
-		return false
+		return nil, false
 	}
-	d.Insert(np, atom)
-	return true
+	return np, d.Insert(np, atom)
 }
 
-// InsertRight inserts the atom to the right of the given position, returning whether it
-// is successful (when the given position doesn't exist, InsertRight won't do anything
-// and return false).
-func (d *Doc) InsertRight(p []Pos, atom string) bool {
+// InsertRight inserts the atom to the right of the given position, returning the inserted
+// position whether it is successful (when the given position doesn't exist, InsertRight
+// won't do anything and return false).
+func (d *Doc) InsertRight(p []Pos, atom string) ([]Pos, bool) {
 	rp, success := d.Right(p)
 	if !success {
-		return false
+		return nil, false
 	}
 	np, success := d.GeneratePos(p, rp)
 	if !success {
-		return false
+		return nil, false
 	}
-	d.Insert(np, atom)
-	return true
+	return np, d.Insert(np, atom)
 }
 
 // DeleteLeft deletes the atom to the left of the given position, returning whether it
 // was successful (when the given position is the start, there is no position to the left
 // of it).
-func (d *Doc) DeleteLeft(p []Pos, atom string) bool {
-	return false
+func (d *Doc) DeleteLeft(p []Pos) bool {
+	lp, success := d.Left(p)
+	if !success {
+		return false
+	}
+	return d.Delete(lp)
 }
 
 // DeleteRight deletes the atom to the right of the given position, returning whether it
 // was successful (when the given position is the end, there is no position to the right
 // of it).
-func (d *Doc) DeleteRight(p []Pos, atom string) bool {
-	return false
+func (d *Doc) DeleteRight(p []Pos) bool {
+	rp, success := d.Right(p)
+	if !success {
+		return false
+	}
+	return d.Delete(rp)
 }
 
 // Content of the entire document.
