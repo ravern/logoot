@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"os"
 )
 
 var (
@@ -15,8 +14,7 @@ func main() {
 	// Initialize server
 	ln, err := net.Listen("tcp", ":8081")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Println("Server listening on 8081...")
 
@@ -24,8 +22,7 @@ func main() {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			panic(err)
 		}
 		fmt.Printf("New connection from %s!\n", conn.RemoteAddr().String())
 
@@ -40,8 +37,7 @@ func handle(conn net.Conn) {
 	n := uint8(len(conns))
 	_, err := conn.Write([]byte{n, 0})
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Assigned site %d to %s.\n", n, conn.RemoteAddr().String())
 
@@ -50,21 +46,19 @@ func handle(conn net.Conn) {
 	for {
 		s, err := r.ReadString(0)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			panic(err)
 		}
 		// Broadcast
 		for i, c := range conns {
 			if i+1 != int(n) {
 				_, err := c.Write([]byte(s))
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					panic(err)
 				}
 			}
 		}
 	}
 
 	fmt.Printf("Dropped connection from %s.\n", conn.RemoteAddr().String())
-	os.Exit(1)
+	panic("Connection dropped!")
 }

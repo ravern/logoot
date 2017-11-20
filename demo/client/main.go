@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	termbox "github.com/nsf/termbox-go"
 )
 
 var (
@@ -18,8 +20,7 @@ func main() {
 	// Connect to server
 	conn, err := net.Dial("tcp", "localhost:8081")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Println("Connected!")
 
@@ -29,11 +30,16 @@ func main() {
 	// Read site id
 	s, err := r.ReadString(0)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 	site = uint8([]byte(s)[0])
 	fmt.Printf("Assigned site %d.\n", site)
+
+	err = termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer termbox.Close()
 
 	// TODO tmp
 	go func() {
@@ -51,8 +57,7 @@ func main() {
 	for {
 		s, err = r.ReadString(0)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			panic(err)
 		}
 		fmt.Println([]byte(s)[0])
 	}
