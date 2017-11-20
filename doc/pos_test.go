@@ -85,6 +85,11 @@ func TestGeneratePos(t *testing.T) {
 			[]doc.Pos{{1, 1}},
 			true,
 		},
+		{
+			[]doc.Pos{{0, 1}, {65534, 1}},
+			[]doc.Pos{{1, 1}},
+			true,
+		},
 	}
 
 	for i, test := range tests {

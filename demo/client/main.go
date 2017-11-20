@@ -37,7 +37,7 @@ func main() {
 	site = uint8([]byte(s)[0])
 	fmt.Printf("Assigned site %d.\n", site)
 
-	c := strings.Split("Hello world", "")
+	c := strings.Split("Demo of Logoot collaborative editing.", "")
 	ldoc = doc.New(c, site)
 
 	ui(conn)
@@ -57,6 +57,7 @@ func ui(conn net.Conn) {
 	p := doc.End
 
 	for {
+		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 		i, _ := ldoc.Index(p)
 		i--
 		termbox.SetCursor(i%w, i/w)
@@ -73,9 +74,11 @@ func ui(conn net.Conn) {
 
 		e := termbox.PollEvent()
 		switch e.Key {
+		// Quit
 		case termbox.KeyCtrlC:
 			os.Exit(0)
 
+		// Navigating
 		case termbox.KeyArrowUp:
 			if i-w > 0 {
 				for j := 0; j < w; j++ {
@@ -97,6 +100,13 @@ func ui(conn net.Conn) {
 				p, _ = ldoc.Right(p)
 			}
 
+		// Typing
+		case termbox.KeyBackspace:
+			fallthrough
+		case termbox.KeyBackspace2:
+			if i != 0 {
+				ldoc.DeleteLeft(p)
+			}
 		default:
 			p, _ = ldoc.InsertLeft(p, string(e.Ch))
 			p, _ = ldoc.Right(p)

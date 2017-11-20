@@ -67,7 +67,23 @@ func GeneratePos(lp, rp []Pos, site uint8) ([]Pos, bool) {
 			} else if site < r.Site {
 				p = append(p, Pos{r.Ident, site})
 			} else {
-				r := random(0, ^uint16(0))
+				min := uint16(0)
+				if len(lp) > len(rp) {
+					min = lp[len(rp)].Ident
+					// Super edge case
+					// left  => {3 1} {65534 1}
+					// right => {4 1}
+					// In this case, 65534 can't be min, because no number is in between
+					// it and MAX. So need to extend the positions further.
+					if min == ^uint16(0)-1 {
+						r := random(0, ^uint16(0))
+						p = append(p, Pos{l.Ident, l.Site})
+						p = append(p, lp[len(rp):]...)
+						p = append(p, Pos{r, site})
+						return p, true
+					}
+				}
+				r := random(min, ^uint16(0))
 				p = append(p, Pos{l.Ident, l.Site}, Pos{r, site})
 			}
 		} else {
