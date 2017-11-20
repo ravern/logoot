@@ -48,7 +48,6 @@ func handle(conn net.Conn) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(s)
 
 		// Broadcast
 		for i, c := range conns {

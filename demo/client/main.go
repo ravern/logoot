@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -14,6 +15,7 @@ import (
 var (
 	site uint8
 	ldoc *doc.Doc // Logoot document
+	p    []doc.Pos
 )
 
 func main() {
@@ -40,10 +42,28 @@ func main() {
 	c := strings.Split("Demo of Logoot collaborative editing.", "")
 	ldoc = doc.New(c, site)
 
-	ui(conn)
 	go read(conn)
+	ui(conn)
 
 	fmt.Println("Disconnected!")
+}
+
+func render() {
+	w, h := termbox.Size()
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+	i, _ := ldoc.Index(p)
+	i--
+	termbox.SetCursor(i%w, i/w)
+	r := []rune(ldoc.Content())
+	for x := 0; x < w; x++ {
+		for y := 0; y < h; y++ {
+			j := x + y*w
+			if j < len(r) {
+				termbox.SetCell(x, y, r[j], termbox.ColorWhite, termbox.ColorDefault)
+			}
+		}
+	}
+	termbox.Flush()
 }
 
 func ui(conn net.Conn) {
@@ -53,24 +73,14 @@ func ui(conn net.Conn) {
 	}
 	defer termbox.Close()
 
-	w, h := termbox.Size()
-	p := doc.End
+	p = doc.End
+	w, _ := termbox.Size()
 
 	for {
-		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 		i, _ := ldoc.Index(p)
 		i--
-		termbox.SetCursor(i%w, i/w)
 		r := []rune(ldoc.Content())
-		for x := 0; x < w; x++ {
-			for y := 0; y < h; y++ {
-				j := x + y*w
-				if j < len(r) {
-					termbox.SetCell(x, y, r[j], termbox.ColorWhite, termbox.ColorDefault)
-				}
-			}
-		}
-		termbox.Flush()
+		render()
 
 		e := termbox.PollEvent()
 		switch e.Key {
@@ -109,20 +119,45 @@ func ui(conn net.Conn) {
 			}
 		default:
 			p, _ = ldoc.InsertLeft(p, string(e.Ch))
+
+			b := []byte{1}
+			b = append(b, doc.PosBytes(p)...)
+			b = append(b, byte(e.Ch))
+			b = append(b, 0, 0, 0)
+			conn.Write(b)
+
 			p, _ = ldoc.Right(p)
 		}
 	}
 }
 
 func read(conn net.Conn) {
-	// Create main reader
-	r := bufio.NewReader(conn)
-
 	for {
-		s, err := r.ReadString(0)
+		b, err := readTill(conn, []byte{0, 0, 0})
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println([]byte(s)[0])
+
+		if b[0] == 1 {
+			p := doc.NewPos(b[1:])
+			ldoc.Insert(p, string(b[len(b)-1:]))
+			render()
+		}
+	}
+}
+
+func readTill(conn net.Conn, delim []byte) (line []byte, err error) {
+	r := bufio.NewReader(conn)
+	for {
+		s := ""
+		s, err = r.ReadString(delim[len(delim)-1])
+		if err != nil {
+			return
+		}
+
+		line = append(line, []byte(s)...)
+		if bytes.HasSuffix(line, delim) {
+			return line[:len(line)-len(delim)], nil
+		}
 	}
 }

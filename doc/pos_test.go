@@ -106,3 +106,33 @@ func TestGeneratePos(t *testing.T) {
 		}
 	}
 }
+
+func TestPosByteConversion(t *testing.T) {
+	tests := [][]doc.Pos{
+		[]doc.Pos{{0, 0}},
+		[]doc.Pos{{1, 1}},
+		[]doc.Pos{{1, 1}},
+		[]doc.Pos{{1, 1}},
+		[]doc.Pos{{1, 1}, {3, 2}},
+		[]doc.Pos{{5, 3}, {11, 10}},
+		[]doc.Pos{{5, 3}, {11, 10}},
+		[]doc.Pos{{1, 1}, {5, 4}},
+		[]doc.Pos{{0, 1}, {65534, 1}},
+		[]doc.Pos{{1, 1}, {3, 2}},
+		[]doc.Pos{{1, 1}, {5, 4}},
+		[]doc.Pos{{1, 1}, {5, 4}, {3, 2}},
+		[]doc.Pos{{0, 1}, {3, 4}},
+		[]doc.Pos{{1, 1}},
+	}
+
+	for i, test := range tests {
+		b := doc.PosBytes(test)
+		p := doc.NewPos(b)
+		if doc.ComparePos(p, test) != 0 {
+			fmt.Println("")
+			fmt.Println(test)
+			fmt.Println(p)
+			t.Errorf("Test %d: Expected converting back and forth to return same pos.", i+1)
+		}
+	}
+}

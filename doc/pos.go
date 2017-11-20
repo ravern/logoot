@@ -102,3 +102,25 @@ func GeneratePos(lp, rp []Pos, site uint8) ([]Pos, bool) {
 	}
 	return p, true
 }
+
+// PosBytes returns the position as a byte slice.
+func PosBytes(p []Pos) []byte {
+	b := []byte{byte(len(p))}
+	for _, c := range p {
+		b = append(b, byte(c.Ident>>8), byte(c.Ident), byte(c.Site))
+	}
+	return b
+}
+
+// NewPos returns a position from the bytes. It doesn't validate the byte slice, so only
+// pass into it valid bytes.
+func NewPos(b []byte) []Pos {
+	p := []Pos{}
+	for i := 0; i < int(b[0]); i++ {
+		offset := i*3 + 1
+		ident := uint16(b[offset])<<8 + uint16(b[offset+1])
+		site := uint8(b[offset+2])
+		p = append(p, Pos{ident, site})
+	}
+	return p
+}
