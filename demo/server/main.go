@@ -3,14 +3,19 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"net"
+	"os"
+)
+
+var (
+	conns []net.Conn
 )
 
 func main() {
 	ln, err := net.Listen("tcp", ":8081")
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	fmt.Println("Server listening on 8081...")
 
@@ -18,6 +23,7 @@ func main() {
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println(err)
+			os.Exit(1)
 		}
 		fmt.Printf("New connection from %s!\n", conn.RemoteAddr().String())
 
@@ -26,12 +32,20 @@ func main() {
 }
 
 func handle(conn net.Conn) {
-	r := bufio.NewReader(conn)
+	conns = append(conns, conn)
 
-	s, err := r.ReadString('b')
-	for err != io.EOF {
-		fmt.Println(s)
-		s, err = r.ReadString('b')
+	// Assign the site id
+	n := uint8(len(conns))
+	_, err := conn.Write([]byte{n, 0})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Printf("Assigned site %d to %s.\n", n, conn.RemoteAddr().String())
+
+	// Begin reading the data
+	_ = bufio.NewReader(conn)
+	for {
 	}
 
 	fmt.Printf("Dropped connection from %s.\n", conn.RemoteAddr().String())
