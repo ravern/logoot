@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"strings"
@@ -19,6 +20,8 @@ var (
 )
 
 func main() {
+	rand.Seed(10)
+
 	fmt.Println("Connecting to server on 8081...")
 
 	// Connect to server
@@ -115,7 +118,13 @@ func ui(conn net.Conn) {
 			fallthrough
 		case termbox.KeyBackspace2:
 			if i != 0 {
+				pp, _ := ldoc.Left(p)
 				ldoc.DeleteLeft(p)
+
+				b := []byte{2}
+				b = append(b, doc.PosBytes(pp)...)
+				b = append(b, 233, 244, 255, 0)
+				conn.Write(b)
 			}
 		default:
 			p, _ = ldoc.InsertLeft(p, string(e.Ch))
@@ -123,7 +132,7 @@ func ui(conn net.Conn) {
 			b := []byte{1}
 			b = append(b, doc.PosBytes(p)...)
 			b = append(b, byte(e.Ch))
-			b = append(b, 0, 0, 0)
+			b = append(b, 233, 244, 255, 0)
 			conn.Write(b)
 
 			p, _ = ldoc.Right(p)
@@ -133,7 +142,7 @@ func ui(conn net.Conn) {
 
 func read(conn net.Conn) {
 	for {
-		b, err := readTill(conn, []byte{0, 0, 0})
+		b, err := readTill(conn, []byte{233, 244, 255, 0})
 		if err != nil {
 			panic(err)
 		}
@@ -141,8 +150,11 @@ func read(conn net.Conn) {
 		if b[0] == 1 {
 			p := doc.NewPos(b[1:])
 			ldoc.Insert(p, string(b[len(b)-1:]))
-			render()
+		} else if b[0] == 2 {
+			p := doc.NewPos(b[1:])
+			ldoc.Delete(p)
 		}
+		render()
 	}
 }
 

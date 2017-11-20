@@ -24,13 +24,14 @@ var (
 
 // New creates a new document containing the given content.
 func New(content []string, site uint8) *Doc {
-	d := &Doc{site: site}
+	d := &Doc{site: 200}
 	d.Insert(Start, "")
 	d.Insert(End, "")
 	for _, c := range content {
 		// End will always exist.
 		d.InsertLeft(End, c)
 	}
+	d.site = site
 	return d
 }
 
